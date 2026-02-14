@@ -196,6 +196,56 @@ A full-stack web application that automates test plan creation by integrating JI
 - Input validation for JIRA IDs and URLs
 - PDF file size limited to 5MB
 
+## 🚀 Deployment
+
+### Deploy to Render (Recommended - Free)
+
+This app is configured for easy deployment to [Render](https://render.com) with full backend + frontend + SQLite support.
+
+#### One-Click Deploy
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/bhaumikgohel/Intelligent-Test-Plan-Generator-Using-JIRA)
+
+#### Manual Deploy
+
+1. **Fork/Connect GitHub Repo**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click **New +** → **Web Service**
+   - Connect your GitHub repo: `bhaumikgohel/Intelligent-Test-Plan-Generator-Using-JIRA`
+
+2. **Configure Service**
+   | Setting | Value |
+   |---------|-------|
+   | Name | `intelligent-test-plan-generator` |
+   | Runtime | Node |
+   | Build Command | `npm install && cd backend && npm install && cd ../frontend && npm install && npm run build` |
+   | Start Command | `cd backend && npm start` |
+
+3. **Add Environment Variables**
+   - `NODE_ENV`: `production`
+   - `ENCRYPTION_KEY`: (Generate a random string)
+
+4. **Create Disk** (For SQLite persistence)
+   - Name: `data`
+   - Mount Path: `/opt/render/project/src/backend/data`
+   - Size: 1 GB
+
+5. **Deploy!** 🎉
+
+Your app will be live at `https://intelligent-test-plan-generator.onrender.com`
+
+### Deploy to Vercel (Frontend Only)
+
+⚠️ **Limitation**: Vercel doesn't support persistent SQLite databases. Use this only if you plan to:
+- Connect to an external database (Supabase, PostgreSQL)
+- Run backend separately on another platform
+
+```bash
+# Deploy frontend only
+npm i -g vercel
+vercel --prod
+```
+
 ## 🐛 Troubleshooting
 
 ### Backend Not Starting
