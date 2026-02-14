@@ -23,15 +23,31 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+const isProduction = process.env.NODE_ENV === 'production';
+
+// CORS - allow frontend origin
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default dev server
+  origin: isProduction ? true : 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
-app.use(morgan('dev'));
+app.use(morgan(isProduction ? 'combined' : 'dev'));
 
 // Static files (templates)
 app.use('/templates', express.static(path.join(process.cwd(), 'templates')));
+
+// Serve frontend static files in production
+if (isProduction) {
+  const frontendDist = path.join(process.cwd(), '..', 'frontend', 'dist');
+  app.use(express.static(frontendDist));
+  
+  // Serve index.html for all non-API routes (SPA support)
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(frontendDist, 'index.html'));
+    }
+  });
+}
 
 // API Routes
 app.use('/api/settings', settingsRoutes);

@@ -2,6 +2,9 @@
 
 const API_BASE = '/api';
 
+// In production, API is on the same domain
+// In development, Vite proxy handles the forwarding
+
 // Generic fetch wrapper
 async function fetchApi<T>(
   endpoint: string,

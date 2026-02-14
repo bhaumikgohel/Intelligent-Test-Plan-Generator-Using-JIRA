@@ -1,0 +1,21 @@
+# Render deployment configuration
+# This file tells Render how to deploy your application
+
+services:
+  # Backend + Frontend combined service
+  - type: web
+    name: intelligent-test-plan-generator
+    runtime: node
+    buildCommand: npm install && cd backend && npm install && cd ../frontend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: ENCRYPTION_KEY
+        generateValue: true
+    disk:
+      name: data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1
