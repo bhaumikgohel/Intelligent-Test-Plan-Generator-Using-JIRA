@@ -1,25 +1,25 @@
-import { Document, Paragraph, TextRun, HeadingLevel, Packer, AlignmentType, BorderStyle } from 'docx';
+import { Document, Paragraph, TextRun, HeadingLevel, Packer, Table, TableCell, TableRow, WidthType, AlignmentType, BorderStyle } from 'docx';
 import { saveAs } from 'file-saver';
 
 /**
  * Convert markdown text to Word document and download
  */
 export const downloadAsDocx = async (content: string, filename: string) => {
-  const paragraphs = parseMarkdownToDocx(content);
+  const children = parseMarkdownToDocx(content);
   
   const doc = new Document({
     sections: [{
       properties: {
         page: {
           margin: {
-            top: 1440, // 1 inch
+            top: 1440,
             right: 1440,
             bottom: 1440,
             left: 1440,
           },
         },
       },
-      children: paragraphs,
+      children,
     }],
   });
 
@@ -28,116 +28,162 @@ export const downloadAsDocx = async (content: string, filename: string) => {
 };
 
 /**
- * Parse markdown content into DocX paragraphs
+ * Parse markdown content into DocX elements
  */
-const parseMarkdownToDocx = (content: string): Paragraph[] => {
-  const paragraphs: Paragraph[] = [];
+const parseMarkdownToDocx = (content: string): (Paragraph | Table)[] => {
+  const children: (Paragraph | Table)[] = [];
   const lines = content.split('\n');
+  let i = 0;
   
-  for (let i = 0; i < lines.length; i++) {
+  while (i < lines.length) {
     const line = lines[i];
     const trimmedLine = line.trim();
     
     if (!trimmedLine) {
-      // Empty line - add spacing
-      paragraphs.push(new Paragraph({ spacing: { after: 200 } }));
+      i++;
       continue;
+    }
+    
+    // Check if this is a table
+    if (trimmedLine.startsWith('|')) {
+      const tableResult = parseTable(lines, i);
+      if (tableResult.table) {
+        children.push(tableResult.table);
+        i = tableResult.newIndex;
+        continue;
+      }
     }
     
     // Heading 1: # Heading
     if (trimmedLine.match(/^#\s/)) {
-      paragraphs.push(new Paragraph({
-        text: trimmedLine.replace(/^#\s/, ''),
-        heading: HeadingLevel.HEADING_1,
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trimmedLine.replace(/^#\s/, ''), bold: true, size: 32 })],
         spacing: { before: 240, after: 120 },
       }));
+      i++;
       continue;
     }
     
     // Heading 2: ## Heading
     if (trimmedLine.match(/^##\s/)) {
-      paragraphs.push(new Paragraph({
-        text: trimmedLine.replace(/^##\s/, ''),
-        heading: HeadingLevel.HEADING_2,
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trimmedLine.replace(/^##\s/, ''), bold: true, size: 28 })],
         spacing: { before: 200, after: 100 },
       }));
+      i++;
       continue;
     }
     
     // Heading 3: ### Heading
     if (trimmedLine.match(/^###\s/)) {
-      paragraphs.push(new Paragraph({
-        text: trimmedLine.replace(/^###\s/, ''),
-        heading: HeadingLevel.HEADING_3,
+      children.push(new Paragraph({
+        children: [new TextRun({ text: trimmedLine.replace(/^###\s/, ''), bold: true, size: 24 })],
         spacing: { before: 160, after: 80 },
       }));
-      continue;
-    }
-    
-    // Table row - skip (simplified, tables need more complex handling)
-    if (trimmedLine.startsWith('|')) {
-      // Skip table separator lines
-      if (trimmedLine.match(/^\|[-:\s|]+\|$/)) {
-        continue;
-      }
-      // Simple table row as text
-      const cells = trimmedLine
-        .split('|')
-        .filter(cell => cell.trim())
-        .map(cell => cell.trim());
-      
-      if (cells.length > 0) {
-        paragraphs.push(new Paragraph({
-          children: [
-            new TextRun({
-              text: cells.join(' | '),
-              bold: true,
-            }),
-          ],
-          spacing: { after: 100 },
-          border: {
-            bottom: {
-              color: "999999",
-              space: 1,
-              style: BorderStyle.SINGLE,
-              size: 6,
-            },
-          },
-        }));
-      }
+      i++;
       continue;
     }
     
     // Bullet list: - item or * item
     if (trimmedLine.match(/^[-*]\s/)) {
-      paragraphs.push(new Paragraph({
-        text: trimmedLine.replace(/^[-*]\s/, ''),
-        bullet: {
-          level: 0,
-        },
+      children.push(new Paragraph({
+        children: parseInlineFormatting(trimmedLine.replace(/^[-*]\s/, '')).children,
+        bullet: { level: 0 },
         spacing: { after: 80 },
       }));
+      i++;
       continue;
     }
     
     // Numbered list: 1. item
     if (trimmedLine.match(/^\d+\.\s/)) {
-      paragraphs.push(new Paragraph({
-        text: trimmedLine.replace(/^\d+\.\s/, ''),
-        numbering: {
-          reference: "my-numbering",
-          level: 0,
-        },
+      children.push(new Paragraph({
+        children: parseInlineFormatting(trimmedLine.replace(/^\d+\.\s/, '')).children,
         spacing: { after: 80 },
       }));
+      i++;
       continue;
     }
     
-    // Regular paragraph with inline formatting
-    paragraphs.push(parseInlineFormatting(trimmedLine));
+    // Regular paragraph
+    children.push(parseInlineFormatting(trimmedLine));
+    i++;
   }
   
-  return paragraphs;
+  return children;
+};
+
+/**
+ * Parse a markdown table starting at the given line index
+ */
+const parseTable = (lines: string[], startIndex: number): { table: Table | null, newIndex: number } => {
+  const rows: TableRow[] = [];
+  let i = startIndex;
+  let isFirstRow = true;
+  
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    
+    if (!line.startsWith('|')) {
+      break;
+    }
+    
+    // Skip separator line (|----|----|)
+    if (line.match(/^\|[-:\s|]+\|$/)) {
+      i++;
+      continue;
+    }
+    
+    // Parse row cells
+    const cells = line
+      .split('|')
+      .map(cell => cell.trim())
+      .filter(cell => cell);
+    
+    if (cells.length === 0) {
+      i++;
+      continue;
+    }
+    
+    const tableCells = cells.map(cellText => {
+      const cellContent = parseInlineFormatting(cellText);
+      return new TableCell({
+        children: [new Paragraph({
+          children: cellContent.children,
+          spacing: { before: 60, after: 60 },
+        })],
+        width: { size: 100 / cells.length, type: WidthType.PERCENTAGE },
+        verticalAlign: 'center',
+      });
+    });
+    
+    rows.push(new TableRow({
+      children: tableCells,
+      tableHeader: isFirstRow,
+    }));
+    
+    isFirstRow = false;
+    i++;
+  }
+  
+  if (rows.length === 0) {
+    return { table: null, newIndex: startIndex + 1 };
+  }
+  
+  const table = new Table({
+    rows,
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.SINGLE, size: 8, color: '000000' },
+      bottom: { style: BorderStyle.SINGLE, size: 8, color: '000000' },
+      left: { style: BorderStyle.SINGLE, size: 8, color: '000000' },
+      right: { style: BorderStyle.SINGLE, size: 8, color: '000000' },
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 4, color: '000000' },
+      insideVertical: { style: BorderStyle.SINGLE, size: 4, color: '000000' },
+    },
+  });
+  
+  return { table, newIndex: i };
 };
 
 /**
@@ -170,10 +216,8 @@ const parseInlineFormatting = (text: string): Paragraph => {
     else if (part.startsWith('`') && part.endsWith('`')) {
       children.push(new TextRun({
         text: part.slice(1, -1),
-        font: "Courier New",
-        shading: {
-          fill: "F5F5F5",
-        },
+        font: 'Courier New',
+        shading: { fill: 'F5F5F5' },
       }));
     }
     // Regular text
