@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { jiraApi, templatesApi, testplanApi } from '@/services/api';
 import ReactMarkdown from 'react-markdown';
+import { downloadAsDocx } from '@/lib/docx-export';
 
 interface Ticket {
   key: string;
@@ -132,14 +133,9 @@ export default function Dashboard() {
     navigator.clipboard.writeText(generatedPlan);
   };
 
-  const handleDownload = () => {
-    const blob = new Blob([generatedPlan], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `test-plan-${ticket?.key || 'generated'}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownload = async () => {
+    const filename = `test-plan-${ticket?.key || 'generated'}`;
+    await downloadAsDocx(generatedPlan, filename);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
