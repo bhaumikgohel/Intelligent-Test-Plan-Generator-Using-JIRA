@@ -27,6 +27,7 @@ data/
 
 # Uploaded files
 templates/*.pdf
+backend/templates/*.pdf
 !.gitkeep
 
 # IDE
