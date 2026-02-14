@@ -82,6 +82,7 @@ function App() {
           <div className="p-4 border-t border-border text-xs text-muted-foreground">
             <p>v1.0.0</p>
             <p className="mt-1">JIRA + LLM Integration</p>
+            <p className="mt-2 font-medium text-primary">Develop by Bhaumik Gohel</p>
           </div>
         )}
       </aside>
