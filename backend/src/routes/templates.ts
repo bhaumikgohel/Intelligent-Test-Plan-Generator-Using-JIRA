@@ -87,7 +87,20 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/templates/upload - Upload PDF template
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      // Multer-specific errors
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ success: false, error: 'File too large. Max size is 5MB.' });
+      }
+      return res.status(400).json({ success: false, error: err.message });
+    } else if (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
