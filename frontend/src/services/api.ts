@@ -8,12 +8,22 @@ async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Prepare headers
+  const headers: Record<string, string> = {};
+  
+  // Only set Content-Type to JSON if body is NOT FormData
+  // (browser will set correct Content-Type with boundary for FormData)
+  const isFormData = options.body instanceof FormData;
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  
+  // Merge with any custom headers
+  const finalHeaders = { ...headers, ...(options.headers as Record<string, string> || {}) };
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers: finalHeaders,
   });
 
   if (!response.ok) {
@@ -63,7 +73,7 @@ export const templatesApi = {
     return fetchApi('/templates/upload', {
       method: 'POST',
       body: formData,
-      headers: {}, // Let browser set content-type for FormData
+      // No headers - browser will set Content-Type with correct boundary for FormData
     });
   },
   delete: (id: string) => fetchApi(`/templates/${id}`, { method: 'DELETE' }),
