@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Upload, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, X, Upload, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,9 @@ export default function SettingsPage() {
   // Templates State
   const [templates, setTemplates] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Load saved configs on mount
   useEffect(() => {
@@ -162,6 +165,32 @@ export default function SettingsPage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDeleteClick = (template: any) => {
+    setTemplateToDelete(template);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!templateToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await templatesApi.delete(templateToDelete.id);
+      await loadTemplates();
+      setShowDeleteDialog(false);
+      setTemplateToDelete(null);
+    } catch (error: any) {
+      alert('Delete failed: ' + error.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false);
+    setTemplateToDelete(null);
   };
 
   return (
@@ -430,9 +459,22 @@ export default function SettingsPage() {
                           {template.isDefault ? 'Default template' : `Added ${new Date(template.createdAt).toLocaleDateString()}`}
                         </p>
                       </div>
-                      {template.isDefault && (
-                        <Badge variant="secondary">Default</Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {template.isDefault && (
+                          <Badge variant="secondary">Default</Badge>
+                        )}
+                        {!template.isDefault && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteClick(template)}
+                            title="Delete template"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   {templates.length === 0 && (
@@ -440,6 +482,27 @@ export default function SettingsPage() {
                   )}
                 </div>
               </div>
+
+              {/* Delete Confirmation Dialog */}
+              {showDeleteDialog && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                  <div className="bg-background rounded-lg shadow-lg max-w-md w-full mx-4 p-6">
+                    <h3 className="text-lg font-semibold mb-2">Delete Template</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Are you sure you want to delete "{templateToDelete?.name}"? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={handleDeleteCancel} disabled={deleting}>
+                        Cancel
+                      </Button>
+                      <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
+                        {deleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
