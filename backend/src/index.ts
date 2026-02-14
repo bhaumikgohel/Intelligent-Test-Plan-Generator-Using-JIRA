@@ -55,6 +55,32 @@ app.use('/api/jira', jiraRoutes);
 app.use('/api/templates', templatesRoutes);
 app.use('/api/testplan', testplanRoutes);
 
+// API Root - List all available endpoints
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Intelligent Test Plan Generator API',
+    version: '1.0.0',
+    endpoints: {
+      'GET  /api/health': 'Health check',
+      'GET  /api/settings/jira': 'Get JIRA config',
+      'POST /api/settings/jira': 'Save JIRA config',
+      'POST /api/settings/jira/test': 'Test JIRA connection',
+      'GET  /api/settings/llm': 'Get LLM config',
+      'POST /api/settings/llm': 'Save LLM config',
+      'POST /api/settings/llm/test': 'Test LLM connection',
+      'GET  /api/settings/llm/models': 'List Ollama models',
+      'POST /api/jira/fetch': 'Fetch JIRA ticket',
+      'GET  /api/jira/recent': 'Get recent tickets',
+      'GET  /api/templates': 'List templates',
+      'GET  /api/templates/:id': 'Get template by ID',
+      'POST /api/templates/upload': 'Upload PDF template',
+      'DELETE /api/templates/:id': 'Delete template',
+      'POST /api/testplan/generate': 'Generate test plan',
+      'GET  /api/testplan/history': 'Get generation history'
+    }
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -77,12 +103,14 @@ const startServer = async () => {
     console.log('Database initialized');
 
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`API endpoints:`);
-      console.log(`  - Settings: http://localhost:${PORT}/api/settings`);
-      console.log(`  - JIRA: http://localhost:${PORT}/api/jira`);
-      console.log(`  - Templates: http://localhost:${PORT}/api/templates`);
-      console.log(`  - Test Plan: http://localhost:${PORT}/api/testplan`);
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+      console.log(`\n📚 API Documentation: http://localhost:${PORT}/api`);
+      console.log(`❤️  Health Check: http://localhost:${PORT}/api/health\n`);
+      console.log(`Available endpoints:`);
+      console.log(`  Settings: /api/settings/jira, /api/settings/llm`);
+      console.log(`  JIRA:     /api/jira/fetch, /api/jira/recent`);
+      console.log(`  Templates:/api/templates`);
+      console.log(`  Test Plan:/api/testplan/generate\n`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
