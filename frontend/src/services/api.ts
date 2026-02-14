@@ -1,9 +1,7 @@
 // API Service for backend communication
 
-const API_BASE = '/api';
-
-// In production, API is on the same domain
-// In development, Vite proxy handles the forwarding
+// Use environment variable for API URL, fallback to relative path
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Generic fetch wrapper
 async function fetchApi<T>(
