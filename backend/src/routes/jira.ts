@@ -12,7 +12,7 @@ const router = Router();
 // Get stored JIRA config with decrypted token
 const getJiraConfig = async () => {
   const config = await dbGet('SELECT value FROM settings WHERE key = ?', ['jira_config']);
-  if (!config) return null;
+  if (!config || !config.value) return null;
   
   const parsed = JSON.parse(config.value);
   const apiToken = await secureStore.getPassword('jira-api-token');

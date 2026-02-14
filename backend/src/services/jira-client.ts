@@ -11,7 +11,7 @@ export class JiraClient {
   }
 
   // Build request headers with authentication
-  private getHeaders(): HeadersInit {
+  private getHeaders(): Record<string, string> {
     const auth = Buffer.from(`${this.config.username}:${this.config.apiToken}`).toString('base64');
     return {
       'Authorization': `Basic ${auth}`,
@@ -69,7 +69,7 @@ export class JiraClient {
       throw new Error(`Failed to fetch ticket: ${response.status} - ${await response.text()}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
     return this.parseTicket(data);
   }
 

@@ -20,7 +20,7 @@ export class GroqProvider {
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
       const models = await this.client.models.list();
-      const availableModels = models.data.map(m => m.id).join(', ');
+      const availableModels = models.data?.map(m => m.id).join(', ') || 'No models found';
       return {
         success: true,
         message: `Connected. Available models: ${availableModels}`

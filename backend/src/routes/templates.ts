@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
     
     res.json({ 
       success: true, 
-      data: templates.map(t => ({
+      data: templates.map((t: any) => ({
         id: t.id,
         name: t.name,
         isDefault: !!t.is_default,

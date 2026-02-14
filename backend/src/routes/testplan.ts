@@ -18,8 +18,8 @@ const getConfigs = async () => {
     dbGet('SELECT value FROM settings WHERE key = ?', ['llm_config'])
   ]);
 
-  const jiraConfig = jiraConfigRow ? JSON.parse(jiraConfigRow.value) : null;
-  const llmConfig = llmConfigRow ? JSON.parse(llmConfigRow.value) : null;
+  const jiraConfig = (jiraConfigRow && jiraConfigRow.value) ? JSON.parse(jiraConfigRow.value) : null;
+  const llmConfig = (llmConfigRow && llmConfigRow.value) ? JSON.parse(llmConfigRow.value) : null;
 
   // Get decrypted tokens
   if (jiraConfig) {
@@ -66,7 +66,7 @@ router.post('/generate', async (req, res) => {
 
     // Fetch template
     const template = await dbGet('SELECT content FROM templates WHERE id = ?', [templateId]);
-    if (!template) {
+    if (!template || !template.content) {
       return res.status(404).json({ success: false, error: 'Template not found' });
     }
 
@@ -141,7 +141,7 @@ router.get('/stream', async (req, res: Response) => {
     const ticket = await jiraClient.fetchTicket(ticketId);
     const template = await dbGet('SELECT content FROM templates WHERE id = ?', [templateId]);
 
-    if (!template) {
+    if (!template || !template.content) {
       res.write(`data: ${JSON.stringify({ error: 'Template not found' })}\n\n`);
       res.end();
       return;

@@ -2,7 +2,6 @@
  * SQLite database connection and utilities
  */
 import * as sqlite3 from 'sqlite3';
-import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -23,10 +22,35 @@ export const db = new sqlite3.Database(DB_PATH, (err) => {
   }
 });
 
-// Promisified methods
-export const dbRun = promisify(db.run.bind(db));
-export const dbGet = promisify(db.get.bind(db));
-export const dbAll = promisify(db.all.bind(db));
+// Promisified db.run
+export const dbRun = (sql: string, params: any[] = []): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function(err) {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+};
+
+// Promisified db.get
+export const dbGet = (sql: string, params: any[] = []): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+};
+
+// Promisified db.all
+export const dbAll = (sql: string, params: any[] = []): Promise<any[]> => {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+};
 
 // Initialize database tables
 export const initDatabase = async (): Promise<void> => {

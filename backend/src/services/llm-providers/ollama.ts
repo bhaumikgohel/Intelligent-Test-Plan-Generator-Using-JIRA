@@ -24,7 +24,7 @@ export class OllamaProvider {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: any = await response.json();
         const models = data.models?.map((m: any) => m.name).join(', ') || 'No models found';
         return {
           success: true,
@@ -52,7 +52,7 @@ export class OllamaProvider {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: any = await response.json();
         return data.models?.map((m: any) => m.name) || [];
       }
       return [];
@@ -109,7 +109,7 @@ Generate a complete test plan following the template structure above.`;
       throw new Error(`Ollama generation failed: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
     return data.response || 'No content generated';
   }
 

@@ -21,7 +21,7 @@ router.get('/jira', async (req, res) => {
   try {
     const config = await dbGet('SELECT value FROM settings WHERE key = ?', ['jira_config']);
     
-    if (!config) {
+    if (!config || !config.value) {
       return res.json({ success: true, data: { configured: false } });
     }
 
@@ -104,12 +104,12 @@ router.get('/llm', async (req, res) => {
   try {
     const config = await dbGet('SELECT value FROM settings WHERE key = ?', ['llm_config']);
     
-    if (!config) {
+    if (!config || !config.value) {
       return res.json({ 
         success: true, 
         data: { 
           provider: 'groq',
-          groq: { model: 'llama3-70b-8192', temperature: 0.7 },
+          groq: { model: 'llama-3.3-70b-versatile', temperature: 0.7 },
           ollama: { baseUrl: 'http://localhost:11434', model: '' }
         } 
       });
@@ -189,7 +189,7 @@ router.post('/llm/test', async (req, res) => {
 router.get('/llm/models', async (req, res) => {
   try {
     const config = await dbGet('SELECT value FROM settings WHERE key = ?', ['llm_config']);
-    const ollamaConfig = config ? JSON.parse(config.value).ollama : { baseUrl: 'http://localhost:11434' };
+    const ollamaConfig = (config && config.value) ? JSON.parse(config.value).ollama : { baseUrl: 'http://localhost:11434' };
     
     const provider = createOllamaProvider(ollamaConfig);
     const models = await provider.listModels();
