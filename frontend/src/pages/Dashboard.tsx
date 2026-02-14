@@ -256,7 +256,9 @@ export default function Dashboard() {
                 {ticket.acceptanceCriteria && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Acceptance Criteria</Label>
-                    <p className="text-sm mt-1 whitespace-pre-wrap">{ticket.acceptanceCriteria}</p>
+                    <div className="text-sm mt-1 whitespace-pre-wrap max-h-48 overflow-y-auto p-2 bg-muted rounded border">
+                      {ticket.acceptanceCriteria}
+                    </div>
                   </div>
                 )}
               </CardContent>
