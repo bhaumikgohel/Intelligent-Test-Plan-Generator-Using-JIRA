@@ -61,10 +61,19 @@ router.post('/jira', async (req, res) => {
 
     // Store config (without token)
     const config = { baseUrl, username };
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-      ['jira_config', JSON.stringify({ ...config, hasToken: true })]
-    );
+    const DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    if (DB_TYPE === 'postgres') {
+      await dbRun(
+        `INSERT INTO settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+        ['jira_config', JSON.stringify({ ...config, hasToken: true })]
+      );
+    } else {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        ['jira_config', JSON.stringify({ ...config, hasToken: true })]
+      );
+    }
 
     res.json({ success: true, message: 'JIRA configuration saved' });
   } catch (error) {
@@ -145,10 +154,19 @@ router.post('/llm', async (req, res) => {
       ollama
     };
 
-    await dbRun(
-      'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-      ['llm_config', JSON.stringify(config)]
-    );
+    const DB_TYPE2 = process.env.DB_TYPE || 'sqlite';
+    if (DB_TYPE2 === 'postgres') {
+      await dbRun(
+        `INSERT INTO settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+        ['llm_config', JSON.stringify(config)]
+      );
+    } else {
+      await dbRun(
+        'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        ['llm_config', JSON.stringify(config)]
+      );
+    }
 
     res.json({ success: true, message: 'LLM configuration saved' });
   } catch (error) {

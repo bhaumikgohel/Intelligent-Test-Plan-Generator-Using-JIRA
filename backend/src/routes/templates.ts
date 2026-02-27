@@ -125,10 +125,18 @@ router.post('/upload', (req, res, next) => {
     fs.writeFileSync(filePath, req.file.buffer);
 
     // Save to database
-    await dbRun(
-      'INSERT INTO templates (id, name, content, is_default) VALUES (?, ?, ?, ?)',
-      [id, name, structuredContent, 0]
-    );
+    const DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    if (DB_TYPE === 'postgres') {
+      await dbRun(
+        'INSERT INTO templates (id, name, content, is_default) VALUES ($1, $2, $3, $4)',
+        [id, name, structuredContent, false]
+      );
+    } else {
+      await dbRun(
+        'INSERT INTO templates (id, name, content, is_default) VALUES (?, ?, ?, ?)',
+        [id, name, structuredContent, 0]
+      );
+    }
 
     res.json({ 
       success: true, 

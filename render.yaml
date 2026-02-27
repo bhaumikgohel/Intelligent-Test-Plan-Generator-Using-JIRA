@@ -28,14 +28,16 @@ services:
         value: 10000  # Render sets this automatically, but we define it explicitly
       - key: ENCRYPTION_KEY
         generateValue: true  # Auto-generate a random encryption key
-      # IMPORTANT: Free tier does not support persistent disks.
-      # SQLite data will be lost on every deploy/restart.
-      # To persist data, either:
-      #   1. Upgrade to 'starter' plan ($7/month) and uncomment the disk section below
-      #   2. Use an external database like Render PostgreSQL or Supabase
-      
+      - key: DATABASE_URL
+        fromDatabase:
+          name: testplan-db
+          property: connectionString
+      # Database type: 'sqlite' or 'postgres'
+      - key: DB_TYPE
+        value: postgres
+    
     # Persistent disk for SQLite database (REQUIRES PAID PLAN - starter or higher)
-    # Uncomment the section below if you upgrade to a paid plan:
+    # Uncomment the section below if you want to use SQLite with a paid plan:
     # disk:
     #   name: data
     #   mountPath: /opt/render/project/src/backend/data
@@ -44,12 +46,14 @@ services:
     # Auto-deploy on git push to main branch
     autoDeploy: true
 
+# PostgreSQL Database (FREE TIER - Persistent data without disk)
+databases:
+  - name: testplan-db
+    plan: free
+    region: oregon
+    databaseName: testplan_generator
+    user: testplan_user
+
 # Optional: Define a preview environment for pull requests
 # previews:
 #   generation: automatic
-
-# Alternative: Use Render PostgreSQL instead of SQLite for persistent data on free tier
-# databases:
-#   - name: testplan-db
-#     plan: free
-#     region: oregon

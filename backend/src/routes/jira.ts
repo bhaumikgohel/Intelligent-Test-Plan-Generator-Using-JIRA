@@ -59,11 +59,24 @@ router.post('/fetch', async (req, res) => {
     const ticket = await client.fetchTicket(sanitizedId);
 
     // Save to recent tickets
-    await dbRun(
-      `INSERT OR REPLACE INTO recent_tickets (ticket_id, summary, data, fetched_at) 
-       VALUES (?, ?, ?, datetime('now'))`,
-      [ticket.key, ticket.summary, JSON.stringify(ticket)]
-    );
+    const DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    if (DB_TYPE === 'postgres') {
+      await dbRun(
+        `INSERT INTO recent_tickets (ticket_id, summary, data, fetched_at) 
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+         ON CONFLICT (ticket_id) DO UPDATE SET 
+           summary = $2, 
+           data = $3, 
+           fetched_at = CURRENT_TIMESTAMP`,
+        [ticket.key, ticket.summary, JSON.stringify(ticket)]
+      );
+    } else {
+      await dbRun(
+        `INSERT OR REPLACE INTO recent_tickets (ticket_id, summary, data, fetched_at) 
+         VALUES (?, ?, ?, datetime('now'))`,
+        [ticket.key, ticket.summary, JSON.stringify(ticket)]
+      );
+    }
 
     // Keep only last 10 recent tickets
     await dbRun(

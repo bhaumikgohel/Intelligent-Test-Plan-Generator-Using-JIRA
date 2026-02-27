@@ -86,11 +86,20 @@ router.post('/generate', async (req, res) => {
     }
 
     // Save to history
-    await dbRun(
-      `INSERT INTO test_plan_history (ticket_id, template_id, generated_content, provider_used) 
-       VALUES (?, ?, ?, ?)`,
-      [ticketId, templateId, generatedContent, selectedProvider]
-    );
+    const DB_TYPE = process.env.DB_TYPE || 'sqlite';
+    if (DB_TYPE === 'postgres') {
+      await dbRun(
+        `INSERT INTO test_plan_history (ticket_id, template_id, generated_content, provider_used) 
+         VALUES ($1, $2, $3, $4)`,
+        [ticketId, templateId, generatedContent, selectedProvider]
+      );
+    } else {
+      await dbRun(
+        `INSERT INTO test_plan_history (ticket_id, template_id, generated_content, provider_used) 
+         VALUES (?, ?, ?, ?)`,
+        [ticketId, templateId, generatedContent, selectedProvider]
+      );
+    }
 
     res.json({ 
       success: true, 
